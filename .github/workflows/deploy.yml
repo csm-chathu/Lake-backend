@@ -23,7 +23,14 @@ jobs:
         run: |
           composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
-      - name: Generate .env from secrets
+      - name: Write `.env` from `DOTENV` secret (if provided)
+        if: ${{ secrets.DOTENV != '' }}
+        run: |
+          echo "Writing .env from DOTENV secret (masked)"
+          printf "%s" "${{ secrets.DOTENV }}" > .env
+
+      - name: Generate .env from individual secrets (fallback)
+        if: ${{ secrets.DOTENV == '' }}
         run: |
           cat > .env <<'EOL'
           APP_NAME=VetClinic
