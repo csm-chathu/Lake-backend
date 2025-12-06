@@ -23,17 +23,11 @@ jobs:
         run: |
           composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
-      - name: Write `.env` from `DOTENV` secret (if provided)
-        if: ${{ secrets.DOTENV != '' }}
+      - name: Skip `.env` generation
         run: |
-          echo "Writing .env from DOTENV secret (masked)"
-          printf "%s" "${{ secrets.DOTENV }}" > .env
-
-        - name: Skip `.env` generation
-          run: |
-            echo "Skipping .env generation in CI by request."
-            echo "Make sure your production server has environment variables configured (via host control panel, systemd, or server-side .env)."
-            echo "This workflow will only deploy application code."
+          echo "Skipping .env generation in CI by request."
+          echo "Make sure your production server has environment variables configured (via host control panel, systemd, or server-side .env)."
+          echo "This workflow will only deploy application code."
 
       - name: Optimize framework
         run: |
@@ -64,8 +58,6 @@ jobs:
             storage/logs/*
             vendor/bin/*
 
-      - name: Run migrations (optional)
-        if: ${{ secrets.RUN_MIGRATIONS == 'true' }}
       - name: Run migrations on remote server (optional)
         run: |
           set -euo pipefail
