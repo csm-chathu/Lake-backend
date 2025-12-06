@@ -1,0 +1,82 @@
+name: Build and Deploy Laravel Backend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, pdo, pdo_mysql
+
+      - name: Install composer dependencies
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+      - name: Generate .env from secrets
+        run: |
+          cat > .env <<'EOL'
+          APP_NAME=VetClinic
+          APP_ENV=production
+          APP_KEY=${{ secrets.APP_KEY }}
+          APP_DEBUG=false
+          APP_URL=${{ secrets.APP_URL }}
+
+          LOG_CHANNEL=stack
+
+          DB_CONNECTION=mysql
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_DATABASE=${{ secrets.DB_DATABASE }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+
+          BROADCAST_DRIVER=log
+          CACHE_DRIVER=file
+          SESSION_DRIVER=file
+          QUEUE_CONNECTION=sync
+          EOL
+
+      - name: Optimize framework
+        run: |
+          php artisan key:generate --ansi --no-interaction || true
+          php artisan config:cache --no-interaction || true
+
+      - name: Prepare list of files to exclude (for FTP)
+        run: |
+          echo "Excluding .git, .github, node_modules, tests, .env, storage/framework/cache, storage/logs"
+
+      - name: Deploy to server via FTP
+        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: ${{ secrets.FTP_DEST }}
+          protocol: ftp
+          exclude: |
+            .git*
+            .github/*
+            node_modules/*
+            frontend/*
+            tests/*
+            .env
+            storage/framework/cache/*
+            storage/logs/*
+            vendor/bin/*
+
+      - name: Run migrations (optional)
+        if: ${{ secrets.RUN_MIGRATIONS == 'true' }}
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.SSH_APP_PATH }} && php artisan migrate --force"
