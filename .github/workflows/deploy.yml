@@ -46,7 +46,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
           server-dir: ${{ secrets.FTP_DEST }}
-          protocol: sftp
+          protocol: ftp
           exclude: |
             .git*
             .github/*
