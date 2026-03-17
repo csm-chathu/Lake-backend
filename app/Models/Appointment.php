@@ -17,6 +17,9 @@ class Appointment extends Model
         'patient_id',
         'veterinarian_id',
         'doctor_charge',
+        'surgery_charge',
+        'other_charge',
+        'other_charge_reason',
         'total_charge',
         'discount',
         'payment_type',
@@ -44,5 +47,15 @@ class Appointment extends Model
     public function medicines()
     {
         return $this->hasMany(AppointmentMedicine::class);
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(AppointmentReport::class);
+    }
+
+    public function vaccinations()
+    {
+        return $this->hasMany(PatientVaccination::class);
     }
 }

@@ -4,8 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 
 class Patient extends Model
 {
@@ -15,7 +13,10 @@ class Patient extends Model
         'name',
         'species',
         'breed',
+        'gender',
         'age',
+        'age_months',
+        'weight',
         'owner_id',
         'notes',
         'passbook_number'
@@ -23,28 +24,52 @@ class Patient extends Model
 
     protected static function booted()
     {
+        // Ensure a passbook number exists before insert so DB constraints
+        // (non-null, unique) do not fail.
         static::creating(function ($patient) {
             if (empty($patient->passbook_number)) {
-                $patient->passbook_number = static::generatePassbookNumber();
+                $patient->passbook_number = static::previewNextPassbookNumber();
+            }
+        });
+
+        // After creation, prefer the definitive `PB-{id}` format using the
+        // real id assigned by the database. Save quietly to avoid event loops.
+        static::created(function ($patient) {
+            $expected = static::generatePassbookNumber($patient->id);
+            if ($patient->passbook_number !== $expected) {
+                $patient->passbook_number = $expected;
+                $patient->saveQuietly();
             }
         });
     }
 
-    public static function generatePassbookNumber()
+    /**
+     * Generate a passbook number. If an $id is provided, use it so the
+     * passbook number is sequential and deterministic; otherwise fall back
+     * to the previous random strategy.
+     */
+    public static function generatePassbookNumber($id = null)
     {
-        $prefix = 'PB' . date('Y');
-        for ($i = 0; $i < 10; $i++) {
-            $candidate = $prefix . '-' . str_pad((string) rand(0, 999999), 6, '0', STR_PAD_LEFT);
-            $exists = DB::table('patients')->where('passbook_number', $candidate)->exists();
-            if (! $exists) {
-                return $candidate;
-            }
-        }
-        return $prefix . '-' . time();
+        return 'PB-' . (string) ((int) ($id ?? 0));
+    }
+
+    /**
+     * Preview the next passbook number using max(id)+1 so the format stays
+     * deterministic as PB-1, PB-2, ... across environments.
+     */
+    public static function previewNextPassbookNumber()
+    {
+        $nextId = ((int) static::max('id')) + 1;
+        return static::generatePassbookNumber($nextId);
     }
 
     public function owner()
     {
         return $this->belongsTo(Owner::class);
+    }
+
+    public function vaccinations()
+    {
+        return $this->hasMany(PatientVaccination::class);
     }
 }

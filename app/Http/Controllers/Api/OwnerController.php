@@ -16,6 +16,7 @@ class OwnerController extends Controller
             'lastName' => $owner->last_name,
             'email' => $owner->email,
             'phone' => $owner->phone,
+            'patientsCount' => $owner->patients_count ?? ($owner->patients ? $owner->patients->count() : 0),
             'createdAt' => $owner->created_at,
             'updatedAt' => $owner->updated_at
         ];
@@ -23,17 +24,22 @@ class OwnerController extends Controller
 
     public function index()
     {
-        $owners = Owner::orderBy('created_at', 'desc')->get();
+        $owners = Owner::withCount('patients')->orderBy('created_at', 'desc')->get();
         return response()->json($owners->map(fn($o) => $this->formatOwner($o)));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'firstName' => 'nullable|string|max:120',
+            'firstName' => 'required|string|max:120',
             'lastName' => 'nullable|string|max:120',
             'email' => 'nullable|email|max:200',
-            'phone' => 'nullable|string|max:50'
+            'phone' => [
+                'required',
+                'regex:/^(?:0|\+94)(?:7\d{8}|11\d{7}|[1-9]\d{8})$/',
+            ]
+        ], [
+            'phone.regex' => 'Enter a valid Sri Lankan phone number (e.g. 0771234567 or +94771234567).'
         ]);
 
         $owner = Owner::create([
@@ -42,6 +48,7 @@ class OwnerController extends Controller
             'email' => $data['email'] ?? null,
             'phone' => $data['phone'] ?? null
         ]);
+        $owner->loadCount('patients');
 
         return response()->json($this->formatOwner($owner), 201);
     }
@@ -52,6 +59,7 @@ class OwnerController extends Controller
         if (! $owner) {
             return response()->json(['message' => 'Owner not found'], 404);
         }
+        $owner->loadCount('patients');
         return response()->json($this->formatOwner($owner));
     }
 
@@ -63,10 +71,15 @@ class OwnerController extends Controller
         }
 
         $data = $request->validate([
-            'firstName' => 'nullable|string|max:120',
+            'firstName' => 'sometimes|required|string|max:120',
             'lastName' => 'nullable|string|max:120',
             'email' => 'nullable|email|max:200',
-            'phone' => 'nullable|string|max:50'
+            'phone' => [
+                'sometimes','required',
+                'regex:/^(?:0|\+94)(?:7\d{8}|11\d{7}|[1-9]\d{8})$/'
+            ]
+        ], [
+            'phone.regex' => 'Enter a valid Sri Lankan phone number (e.g. 0771234567 or +94771234567).'
         ]);
 
         $updateData = [];
@@ -76,6 +89,7 @@ class OwnerController extends Controller
         if (isset($data['phone'])) $updateData['phone'] = $data['phone'];
 
         $owner->update($updateData);
+        $owner->loadCount('patients');
         return response()->json($this->formatOwner($owner));
     }
 

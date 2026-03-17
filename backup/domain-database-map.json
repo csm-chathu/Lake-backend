@@ -1,0 +1,11 @@
+{
+    "domains": {
+        // "localhost": {
+        //     "connection": "sqlite",
+        //     "database": "database/database.sqlite"
+        // },
+        "localhost": "demo_pos",
+        "vet.sirilmotors.com": "sirifwfq_vet",
+        "demo.sirilmotors.com": "sirifwfq_demo_pos"
+    }
+}
