@@ -7,6 +7,74 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
+    private function isAbsolutePath(string $path): bool
+    {
+        $path = trim($path);
+        if ($path === '') {
+            return false;
+        }
+
+        $isWindowsAbsolute =
+            strlen($path) >= 3
+            && ctype_alpha($path[0])
+            && $path[1] === ':'
+            && ($path[2] === '\\' || $path[2] === '/');
+
+        $isUnixAbsolute = str_starts_with($path, '/') || str_starts_with($path, '\\');
+
+        return $isWindowsAbsolute || $isUnixAbsolute;
+    }
+
+    private function resolveSqliteDatabasePath(string $database): string
+    {
+        $path = trim($database);
+        if ($path === '') {
+            return $path;
+        }
+
+        $path = str_replace(
+            ['{base_path}', '{database_path}', '{storage_path}', '%BASE_PATH%', '%DATABASE_PATH%', '%STORAGE_PATH%'],
+            [base_path(), database_path(), storage_path(), base_path(), database_path(), storage_path()],
+            $path
+        );
+
+        if ($this->isAbsolutePath($path)) {
+            if (is_file($path)) {
+                return $path;
+            }
+
+            $basename = basename(str_replace('\\', '/', $path));
+            $candidates = [
+                database_path($basename),
+                storage_path('app/' . $basename),
+            ];
+
+            foreach ($candidates as $candidate) {
+                if (is_file($candidate)) {
+                    return $candidate;
+                }
+            }
+
+            return $path;
+        }
+
+        $relative = ltrim(str_replace('\\', '/', $path), '/');
+        $candidates = [
+            base_path($relative),
+            database_path($relative),
+            storage_path('app/' . $relative),
+            storage_path($relative),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return base_path($relative);
+    }
+
     /**
      * Register any application services.
      */
@@ -90,6 +158,14 @@ class AppServiceProvider extends ServiceProvider
             $targetDatabase = trim((string) ($domainConfig['database'] ?? ''));
         }
 
+        $connectionAliases = [
+            'sql' => 'mysql',
+            'sqllite' => 'sqlite',
+            'sqlliteserver' => 'sqlite',
+            'sqlite3' => 'sqlite',
+        ];
+        $targetConnection = $connectionAliases[$targetConnection] ?? $targetConnection;
+
         if ($targetDatabase === '') {
             return;
         }
@@ -99,8 +175,8 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
-        if ($targetConnection === 'sqlite' && !preg_match('/^(?:[A-Za-z]:[\\\/]|[\\\/])/', $targetDatabase)) {
-            $targetDatabase = base_path($targetDatabase);
+        if ($targetConnection === 'sqlite') {
+            $targetDatabase = $this->resolveSqliteDatabasePath($targetDatabase);
         }
 
         $currentConnection = (string) config('database.default', 'mysql');

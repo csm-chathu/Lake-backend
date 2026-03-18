@@ -13,11 +13,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Default seeding for vet/clinic
         $this->call([
             UserSeeder::class,
         ]);
-
-        ClinicSetting::firstOrCreate(
+        \App\Models\ClinicSetting::firstOrCreate(
             [],
             [
                 'name' => 'THE LAKE ANIMAL CLINIC',

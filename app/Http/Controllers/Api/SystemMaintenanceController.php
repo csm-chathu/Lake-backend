@@ -11,6 +11,230 @@ use Illuminate\Support\Facades\DB;
 
 class SystemMaintenanceController extends Controller
 {
+    private function isAbsolutePath(string $path): bool
+    {
+        $path = trim($path);
+        if ($path === '') {
+            return false;
+        }
+
+        $isWindowsAbsolute =
+            strlen($path) >= 3
+            && ctype_alpha($path[0])
+            && $path[1] === ':'
+            && ($path[2] === '\\' || $path[2] === '/');
+
+        $isUnixAbsolute = str_starts_with($path, '/') || str_starts_with($path, '\\');
+
+        return $isWindowsAbsolute || $isUnixAbsolute;
+    }
+
+    private function sqliteTableExists($driver, string $table): bool
+    {
+        $row = $driver->selectOne(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=? LIMIT 1",
+            [$table]
+        );
+
+        return $row !== null;
+    }
+
+    private function reconcileSqliteCreateTableMigrations(): array
+    {
+        [$connection, $database] = $this->databaseSnapshot();
+        if ($connection !== 'sqlite') {
+            return ['inserted' => 0, 'checked' => 0];
+        }
+
+        $sqlitePath = $this->normalizeSqlitePath($database);
+        if (!is_file($sqlitePath)) {
+            return ['inserted' => 0, 'checked' => 0];
+        }
+
+        $driver = DB::connection('sqlite');
+        if (!$this->sqliteTableExists($driver, 'migrations')) {
+            return ['inserted' => 0, 'checked' => 0];
+        }
+
+        $migrationFiles = glob(database_path('migrations/*.php')) ?: [];
+        sort($migrationFiles);
+
+        $existing = $driver->table('migrations')->pluck('migration')->all();
+        $existingSet = array_fill_keys(array_map('strval', $existing), true);
+        $batch = max(1, (int) ($driver->table('migrations')->max('batch') ?? 0));
+
+        $inserted = 0;
+        $checked = 0;
+
+        foreach ($migrationFiles as $filePath) {
+            $migration = pathinfo($filePath, PATHINFO_FILENAME);
+            if (isset($existingSet[$migration])) {
+                continue;
+            }
+
+            $content = file_get_contents($filePath);
+            if ($content === false) {
+                continue;
+            }
+
+            if (!preg_match("/Schema::create\\s*\\(\\s*['\"]([a-zA-Z0-9_]+)['\"]/", $content, $matches)) {
+                continue;
+            }
+
+            $checked++;
+            $table = $matches[1] ?? '';
+            if ($table === '' || !$this->sqliteTableExists($driver, $table)) {
+                continue;
+            }
+
+            $driver->table('migrations')->insert([
+                'migration' => $migration,
+                'batch' => $batch,
+            ]);
+            $existingSet[$migration] = true;
+            $inserted++;
+        }
+
+        return ['inserted' => $inserted, 'checked' => $checked];
+    }
+
+    private function markSqliteCreateMigrationAsRanForTable(string $table): int
+    {
+        [$connection, $database] = $this->databaseSnapshot();
+        if ($connection !== 'sqlite' || $table === '') {
+            return 0;
+        }
+
+        $sqlitePath = $this->normalizeSqlitePath($database);
+        if (!is_file($sqlitePath)) {
+            return 0;
+        }
+
+        $driver = DB::connection('sqlite');
+        if (!$this->sqliteTableExists($driver, 'migrations') || !$this->sqliteTableExists($driver, $table)) {
+            return 0;
+        }
+
+        $migrationFiles = glob(database_path('migrations/*.php')) ?: [];
+        sort($migrationFiles);
+
+        $existing = $driver->table('migrations')->pluck('migration')->all();
+        $existingSet = array_fill_keys(array_map('strval', $existing), true);
+        $batch = max(1, (int) ($driver->table('migrations')->max('batch') ?? 0));
+        $inserted = 0;
+
+        foreach ($migrationFiles as $filePath) {
+            $migration = pathinfo($filePath, PATHINFO_FILENAME);
+            if (isset($existingSet[$migration])) {
+                continue;
+            }
+
+            $content = file_get_contents($filePath);
+            if ($content === false) {
+                continue;
+            }
+
+            if (!preg_match("/Schema::create\\s*\\(\\s*['\"]([a-zA-Z0-9_]+)['\"]/", $content, $matches)) {
+                continue;
+            }
+
+            if (($matches[1] ?? '') !== $table) {
+                continue;
+            }
+
+            $driver->table('migrations')->insert([
+                'migration' => $migration,
+                'batch' => $batch,
+            ]);
+            $existingSet[$migration] = true;
+            $inserted++;
+        }
+
+        return $inserted;
+    }
+
+    private function normalizeSqlitePath(string $database): string
+    {
+        $path = trim($database);
+        if ($path === '') {
+            return $path;
+        }
+
+        $path = str_replace(
+            ['{base_path}', '{database_path}', '{storage_path}', '%BASE_PATH%', '%DATABASE_PATH%', '%STORAGE_PATH%'],
+            [base_path(), database_path(), storage_path(), base_path(), database_path(), storage_path()],
+            $path
+        );
+
+        if ($this->isAbsolutePath($path)) {
+            if (is_file($path)) {
+                return $path;
+            }
+
+            $basename = basename(str_replace('\\', '/', $path));
+            foreach ([database_path($basename), storage_path('app/' . $basename)] as $candidate) {
+                if (is_file($candidate)) {
+                    return $candidate;
+                }
+            }
+
+            return $path;
+        }
+
+        $relative = ltrim(str_replace('\\', '/', $path), '/');
+        foreach ([base_path($relative), database_path($relative), storage_path('app/' . $relative), storage_path($relative)] as $candidate) {
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return base_path($relative);
+    }
+
+    private function ensureSqliteMigrationsTable(): void
+    {
+        [$connection, $database] = $this->databaseSnapshot();
+        if ($connection !== 'sqlite') {
+            return;
+        }
+
+        $sqlitePath = $this->normalizeSqlitePath($database);
+        if (!is_file($sqlitePath)) {
+            return;
+        }
+
+        $driver = DB::connection('sqlite');
+        $hasMigrationsTable = (bool) $driver->selectOne(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='migrations'"
+        );
+
+        if (!$hasMigrationsTable) {
+            return;
+        }
+
+        $columns = $driver->select("PRAGMA table_info('migrations')");
+        $idColumn = collect($columns)->first(fn ($column) => ($column->name ?? null) === 'id');
+        if (!$idColumn) {
+            return;
+        }
+
+        $idType = strtolower((string) ($idColumn->type ?? ''));
+        $isPrimary = (int) ($idColumn->pk ?? 0) === 1;
+
+        if ($isPrimary && $idType === 'integer') {
+            return;
+        }
+
+        DB::transaction(function () use ($driver) {
+            $driver->statement('CREATE TABLE IF NOT EXISTS migrations_tmp (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, migration VARCHAR NOT NULL, batch INTEGER NOT NULL)');
+            $driver->statement('DELETE FROM migrations_tmp');
+            $driver->statement('INSERT INTO migrations_tmp (migration, batch) SELECT migration, batch FROM migrations ORDER BY id');
+            $driver->statement('DROP TABLE migrations');
+            $driver->statement('ALTER TABLE migrations_tmp RENAME TO migrations');
+            $driver->statement('CREATE INDEX IF NOT EXISTS migrations_migration_index ON migrations (migration)');
+        });
+    }
+
     private function resolveEmailPostfix(Request $request): ?string
     {
         $postfix = trim((string) (
@@ -211,15 +435,63 @@ class SystemMaintenanceController extends Controller
         }
 
         try {
+            $this->ensureSqliteMigrationsTable();
+            $reconciled = $this->reconcileSqliteCreateTableMigrations();
+        } catch (\Throwable $throwable) {
+            return response()->json([
+                'message' => 'Pre-migration SQLite table check failed',
+                'domain' => $domain,
+                'connection' => $connection,
+                'database' => $database,
+                'error' => $throwable->getMessage(),
+            ], 500);
+        }
+
+        try {
             $exitCode = Artisan::call('migrate', ['--force' => true]);
             $output = trim((string) Artisan::output());
         } catch (\Throwable $throwable) {
+            $message = (string) $throwable->getMessage();
+            if (
+                $connection === 'sqlite'
+                && str_contains($message, 'already exists')
+                && preg_match('/table\s+"([a-zA-Z0-9_]+)"\s+already exists/i', $message, $matches)
+            ) {
+                $tableName = (string) ($matches[1] ?? '');
+                try {
+                    $fixed = $this->markSqliteCreateMigrationAsRanForTable($tableName);
+                    if ($fixed > 0) {
+                        $exitCode = Artisan::call('migrate', ['--force' => true]);
+                        $output = trim((string) Artisan::output());
+
+                        if ($exitCode === 0) {
+                            return response()->json([
+                                'message' => 'Migration completed',
+                                'domain' => $domain,
+                                'connection' => $connection,
+                                'database' => $database,
+                                'sqliteCreateMigrationsReconciled' => ($reconciled['inserted'] ?? 0) + $fixed,
+                                'output' => $output,
+                            ]);
+                        }
+                    }
+                } catch (\Throwable $recoveryThrowable) {
+                    return response()->json([
+                        'message' => 'Migration failed during SQLite recovery',
+                        'domain' => $domain,
+                        'connection' => $connection,
+                        'database' => $database,
+                        'error' => $recoveryThrowable->getMessage(),
+                    ], 500);
+                }
+            }
+
             return response()->json([
                 'message' => 'Migration failed',
                 'domain' => $domain,
                 'connection' => $connection,
                 'database' => $database,
-                'error' => $throwable->getMessage(),
+                'error' => $message,
             ], 500);
         }
 
@@ -239,6 +511,7 @@ class SystemMaintenanceController extends Controller
             'domain' => $domain,
             'connection' => $connection,
             'database' => $database,
+            'sqliteCreateMigrationsReconciled' => $reconciled['inserted'] ?? 0,
             'output' => $output,
         ]);
     }
@@ -265,17 +538,57 @@ class SystemMaintenanceController extends Controller
             ], 422);
         }
 
-        try {
-            $exitCode = Artisan::call('db:seed', ['--force' => true]);
-            $output = trim((string) Artisan::output());
-        } catch (\Throwable $throwable) {
-            return response()->json([
-                'message' => 'Seeding failed',
-                'domain' => $domain,
-                'connection' => $connection,
-                'database' => $database,
-                'error' => $throwable->getMessage(),
-            ], 500);
+        $shopType = $request->input('shop_type');
+        if ($shopType) {
+            try {
+                $seederClass = null;
+                switch ($shopType) {
+                    case 'retail':
+                        $seederClass = \Database\Seeders\RetailShopSeeder::class;
+                        break;
+                    case 'pharmacy':
+                        $seederClass = \Database\Seeders\PharmacySeeder::class;
+                        break;
+                    case 'restaurant':
+                        $seederClass = \Database\Seeders\RestaurantSeeder::class;
+                        break;
+                    case 'spares':
+                    case 'spareparts':
+                        $seederClass = \Database\Seeders\SparePartsSeeder::class;
+                        break;
+                    default:
+                        return response()->json([
+                            'message' => 'Invalid shop_type',
+                            'domain' => $domain,
+                            'connection' => $connection,
+                            'database' => $database,
+                        ], 422);
+                }
+                (new $seederClass)->run();
+                $exitCode = 0;
+                $output = 'Seeded: ' . $seederClass;
+            } catch (\Throwable $throwable) {
+                return response()->json([
+                    'message' => 'Seeding failed',
+                    'domain' => $domain,
+                    'connection' => $connection,
+                    'database' => $database,
+                    'error' => $throwable->getMessage(),
+                ], 500);
+            }
+        } else {
+            try {
+                $exitCode = \Artisan::call('db:seed', ['--force' => true]);
+                $output = trim((string) \Artisan::output());
+            } catch (\Throwable $throwable) {
+                return response()->json([
+                    'message' => 'Seeding failed',
+                    'domain' => $domain,
+                    'connection' => $connection,
+                    'database' => $database,
+                    'error' => $throwable->getMessage(),
+                ], 500);
+            }
         }
 
         try {

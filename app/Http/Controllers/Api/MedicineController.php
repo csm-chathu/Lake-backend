@@ -156,22 +156,20 @@ class MedicineController extends Controller
             $medicine->update($updateData);
 
             if (isset($data['brands'])) {
-                $medicine->brands()->delete();
                 foreach ($data['brands'] as $brandData) {
-                    $brand = $medicine->brands()->create([
-                        'name' => $brandData['name'] ?? null,
-                        'price' => $brandData['price'] ?? 0,
-                        'wholesale_price' => $brandData['wholesale_price'] ?? 0,
-                        'stock' => $brandData['stock'] ?? 0,
-                        'expiry_date' => $brandData['expiry_date'] ?? null,
-                        'barcode' => $brandData['barcode'] ?? null,
-                        'supplier_id' => $brandData['supplier_id'] ?? null,
-                        'batch_number' => $brandData['batch_number'] ?? null,
-                        'image_url' => $brandData['image_url'] ?? null
-                    ]);
-
-                    if (isset($brandData['batches']) && is_array($brandData['batches'])) {
-                        $this->persistBatches($brand, $brandData['batches']);
+                    if (isset($brandData['id'])) {
+                        $brand = $medicine->brands()->where('id', $brandData['id'])->first();
+                        if ($brand) {
+                            $brand->update($brandData);
+                            if (isset($brandData['batches']) && is_array($brandData['batches'])) {
+                                $this->persistBatches($brand, $brandData['batches']);
+                            }
+                        }
+                    } else {
+                        $brand = $medicine->brands()->create($brandData);
+                        if (isset($brandData['batches']) && is_array($brandData['batches'])) {
+                            $this->persistBatches($brand, $brandData['batches']);
+                        }
                     }
                 }
             }
