@@ -38,36 +38,14 @@ jobs:
         run: |
           echo "Excluding .git, .github, node_modules, tests, .env, storage/framework/cache, storage/logs"
 
-      - name: Deploy to server via FTP
-        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      - name: Deploy via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: ${{ secrets.FTP_DEST }}
-          protocol: ftp
-          exclude: |
-            .git*
-            .github/*
-            node_modules/*
-            frontend/*
-            tests/*
-            .env
-            storage/framework/cache/*
-            storage/logs/*
-            vendor/bin/*
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 21098
+          local_path: './*'
+          remote_path: '/home/lmucunal/pos-api.lmuc-innovations.com'
+          args: '-o StrictHostKeyChecking=no'
 
-      - name: Run migrations on remote server (optional)
-        run: |
-          set -euo pipefail
-          if [ "${{ secrets.RUN_MIGRATIONS }}" = "true" ]; then
-            if [ -z "${{ secrets.SSH_USER }}" ] || [ -z "${{ secrets.SSH_HOST }}" ] || [ -z "${{ secrets.SSH_APP_PATH }}" ]; then
-              echo "RUN_MIGRATIONS requested but SSH info missing. Skipping migrations."
-              exit 0
-            fi
-            echo "Running migrations on remote server (make sure server env/config is set)"
-            ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.SSH_APP_PATH }} && php artisan migrate --force"
-          else
-            echo "RUN_MIGRATIONS is not 'true' — skipping migrations"
-          fi
