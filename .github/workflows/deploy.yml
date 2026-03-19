@@ -13,31 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
-          extensions: mbstring, pdo, pdo_mysql
-
-      - name: Install composer dependencies
-        run: |
-          composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
-
-      - name: Skip `.env` generation
-        run: |
-          echo "Skipping .env generation in CI by request."
-          echo "Make sure your production server has environment variables configured (via host control panel, systemd, or server-side .env)."
-          echo "This workflow will only deploy application code."
-
-      - name: Optimize framework
-        run: |
-          php artisan key:generate --ansi --no-interaction || true
-          php artisan config:cache --no-interaction || true
-
-      - name: Prepare list of files to exclude (for FTP)
-        run: |
-          echo "Excluding .git, .github, node_modules, tests, .env, storage/framework/cache, storage/logs"
-
       - name: Deploy via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -46,7 +21,20 @@ jobs:
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 21098
           local_path: './*'
-          exclude: 'vendor/**'
           remote_path: '/home/lmucunal/pos-api.lmuc-innovations.com'
           args: '-o StrictHostKeyChecking=no'
+          exclude: '.env'
 
+      - name: Install Composer on server (optional)
+        if: ${{ secrets.SSH_USER && secrets.SSH_HOST && secrets.SSH_APP_PATH }}
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+            cd ${{ secrets.SSH_APP_PATH }}
+            if ! command -v composer >/dev/null 2>&1; then
+              php -r "copy(\"https://getcomposer.org/installer\", \"composer-setup.php\");"
+              php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+              composer --version
+            else
+              echo "Composer already installed."
+            fi
+          '
