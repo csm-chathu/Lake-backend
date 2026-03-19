@@ -46,6 +46,7 @@ jobs:
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 21098
           local_path: './*'
+          exclude: 'vendor/**'
           remote_path: '/home/lmucunal/pos-api.lmuc-innovations.com'
           args: '-o StrictHostKeyChecking=no'
 
