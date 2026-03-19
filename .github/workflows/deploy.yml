@@ -13,6 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+
       - name: Deploy via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -25,16 +26,3 @@ jobs:
           args: '-o StrictHostKeyChecking=no'
           exclude: '.env'
 
-      - name: Install Composer on server (optional)
-        if: ${{ secrets.SSH_USER && secrets.SSH_HOST && secrets.SSH_APP_PATH }}
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
-            cd ${{ secrets.SSH_APP_PATH }}
-            if ! command -v composer >/dev/null 2>&1; then
-              php -r "copy(\"https://getcomposer.org/installer\", \"composer-setup.php\");"
-              php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-              composer --version
-            else
-              echo "Composer already installed."
-            fi
-          '
