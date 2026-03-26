@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('medicine_brands', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('medicine_id')->constrained('medicines')->cascadeOnDelete();
+            $table->foreignId('medicine_id')->constrained('medicines'); // removed cascadeOnDelete
             $table->string('name', 200)->nullable();
             $table->decimal('price', 10, 2)->default(0);
             $table->timestamps();

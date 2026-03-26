@@ -14,6 +14,7 @@ class DirectSale extends Model
         'sale_reference',
         'subtotal',
         'discount',
+        'service_charge',
         'total',
         'payment_type',
         'payment_status',
@@ -24,6 +25,7 @@ class DirectSale extends Model
         'date' => 'datetime',
         'subtotal' => 'float',
         'discount' => 'float',
+        'service_charge' => 'float',
         'total' => 'float'
     ];
 

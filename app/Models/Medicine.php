@@ -9,8 +9,11 @@ class Medicine extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description'];
+        protected $fillable = ['name', 'description', 'type'];
 
+        protected $casts = [
+            'type' => 'array',
+        ];
     public function brands()
     {
         return $this->hasMany(MedicineBrand::class);

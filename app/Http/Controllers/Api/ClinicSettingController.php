@@ -25,6 +25,8 @@ class ClinicSettingController extends Controller
                 'logo_url' => null,
                 'hero_image_url' => 'vet-clinic-hero.jpg',
                 'sms_sender_id' => config('sms.sender_id'),
+                'shop_type' => 'vet',
+                'service_charge_percentage' => 0.00,
             ]);
         }
 
@@ -50,7 +52,9 @@ class ClinicSettingController extends Controller
             'currency_code' => 'nullable|string|max:8',
             'logo_url' => 'nullable|url|max:2048',
             'hero_image_url' => 'nullable|string|max:2048',
-            'sms_sender_id' => 'nullable|string|max:64'
+            'sms_sender_id' => 'nullable|string|max:64',
+            'shop_type' => 'nullable|string|max:64',
+            'service_charge_percentage' => 'nullable|numeric|min:0|max:100'
         ]);
 
         $settings->update($data);

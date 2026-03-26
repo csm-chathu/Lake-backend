@@ -9,8 +9,8 @@ return new class extends Migration {
     {
         Schema::create('medicine_brand_batches', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('medicine_brand_id')->constrained('medicine_brands')->cascadeOnDelete();
-            $table->string('batch_number', 120);
+            $table->foreignId('medicine_brand_id')->constrained('medicine_brands'); // removed cascadeOnDelete
+            $table->string('batch_number', 120)->nullable();
             $table->date('expiry_date')->nullable();
             $table->integer('quantity')->default(0);
             $table->timestamps();

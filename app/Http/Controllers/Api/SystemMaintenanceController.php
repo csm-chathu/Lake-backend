@@ -422,6 +422,20 @@ class SystemMaintenanceController extends Controller
 
         $domain = $this->resolveDomainHint($request);
         [$connection, $database] = $this->databaseSnapshot();
+        $sqlitePath = null;
+        if ($connection === 'sqlite') {
+            $sqlitePath = base_path($database);
+            if (!is_file($sqlitePath)) {
+                $sqlitePath = database_path(basename($database));
+            }
+            if (is_file($sqlitePath)) {
+                $size = filesize($sqlitePath);
+                $mtime = filemtime($sqlitePath);
+                \Log::info("[MIGRATE] SQLite file before migration: $sqlitePath, size=$size, mtime=" . date('c', $mtime));
+            } else {
+                \Log::warning("[MIGRATE] SQLite file not found before migration: $sqlitePath");
+            }
+        }
         [$canConnect, $error] = $this->canConnect($connection);
 
         if (!$canConnect) {
@@ -450,6 +464,11 @@ class SystemMaintenanceController extends Controller
         try {
             $exitCode = Artisan::call('migrate', ['--force' => true]);
             $output = trim((string) Artisan::output());
+            if ($connection === 'sqlite' && $sqlitePath && is_file($sqlitePath)) {
+                $size = filesize($sqlitePath);
+                $mtime = filemtime($sqlitePath);
+                \Log::info("[MIGRATE] SQLite file after migration: $sqlitePath, size=$size, mtime=" . date('c', $mtime));
+            }
         } catch (\Throwable $throwable) {
             $message = (string) $throwable->getMessage();
             if (

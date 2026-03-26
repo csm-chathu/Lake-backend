@@ -97,6 +97,7 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
+
         $frontendHost = strtolower(trim((string) (
             $request->headers->get('X-Target-Domain')
             ?? $request->headers->get('X-Frontend-Domain')
@@ -120,8 +121,9 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $frontendHost = strtolower(trim($frontendHost));
-        if ($frontendHost === '') {
-            return;
+        // Handle Electron/desktop (file:// origin) or missing domain
+        if ($frontendHost === '' || $frontendHost === 'file') {
+            $frontendHost = 'localhost';
         }
 
         $mapPath = env('DOMAIN_DB_MAP_FILE', storage_path('app/domain-database-map.json'));

@@ -23,5 +23,6 @@ class ClinicSetting extends Model
         'logo_url',
         'hero_image_url',
         'sms_sender_id',
+        'shop_type'
     ];
 }

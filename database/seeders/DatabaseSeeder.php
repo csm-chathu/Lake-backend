@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         // Default seeding for vet/clinic
         $this->call([
             UserSeeder::class,
+            SparePartsSeeder::class, // Add sample data for spare parts
         ]);
         \App\Models\ClinicSetting::firstOrCreate(
             [],

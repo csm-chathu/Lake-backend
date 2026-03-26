@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\DirectSale;
+use App\Models\ClinicSetting;
 use App\Models\DirectSaleItem;
 use App\Models\MedicineBrand;
 use Illuminate\Http\Request;
@@ -99,6 +100,7 @@ class DirectSaleController extends Controller
             'saleReference' => $sale->sale_reference,
             'subtotal' => (float) $sale->subtotal,
             'discount' => (float) $sale->discount,
+            'serviceCharge' => (float) $sale->service_charge,
             'total' => (float) $sale->total,
             'paymentType' => $sale->payment_type,
             'paymentStatus' => $sale->payment_status,
@@ -177,6 +179,7 @@ class DirectSaleController extends Controller
                 'sale_reference' => $data['saleReference'] ?? null,
                 'subtotal' => 0,
                 'discount' => $data['discount'] ?? 0,
+                'service_charge' => $data['serviceCharge'] ?? 0,
                 'total' => 0,
                 'payment_type' => $data['paymentType'] ?? 'cash',
                 'payment_status' => $data['paymentStatus'] ?? (($data['paymentType'] ?? 'cash') === 'credit' ? 'pending' : 'paid'),
@@ -219,7 +222,8 @@ class DirectSaleController extends Controller
             }
 
             $discount = (float) ($data['discount'] ?? 0);
-            $total = max(0, round($subtotal - $discount, 2));
+            $serviceCharge = (float) ($data['serviceCharge'] ?? 0);
+            $total = max(0, round($subtotal - $discount + $serviceCharge, 2));
 
             $sale->update([
                 'subtotal' => round($subtotal, 2),

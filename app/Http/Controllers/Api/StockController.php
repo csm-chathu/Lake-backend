@@ -77,7 +77,7 @@ class StockController extends Controller
         $item = StockItem::findOrFail($id);
 
         $data = $request->validate([
-            'batch_number' => 'required|string|max:120',
+            'batch_number' => 'nullable|string|max:120',
             'expiry_date' => 'nullable|date',
             'quantity' => 'required|integer|min:0',
             'cost_price' => 'nullable|numeric|min:0',
@@ -119,7 +119,7 @@ class StockController extends Controller
         $batch = StockBatch::where('stock_item_id', $item->id)->findOrFail($batchId);
 
         $data = $request->validate([
-            'batch_number' => 'required|string|max:120',
+            'batch_number' => 'nullable|string|max:120',
             'expiry_date' => 'nullable|date',
             'quantity' => 'required|integer|min:0',
             'cost_price' => 'nullable|numeric|min:0',

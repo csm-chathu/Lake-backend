@@ -75,7 +75,7 @@ class PatientController extends Controller
             // accept either `age` (years) for backward compatibility or `ageYears`/`ageMonths`
             'age' => 'nullable|integer|min:0|max:100',
             'ageYears' => 'nullable|integer|min:0|max:100',
-            'ageMonths' => 'nullable|integer|min:0|max:11',
+            'ageMonths' => 'nullable|integer|min:0|max:12',
             'weight' => 'nullable|numeric|min:0',
             'ownerId' => 'required|integer|exists:owners,id',
             'notes' => 'nullable|string|max:2000'

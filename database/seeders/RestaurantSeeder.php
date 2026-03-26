@@ -31,12 +31,15 @@ class RestaurantSeeder extends Seeder
         ]);
 
         // Clean up for repeatable seeding
-        \DB::table('purchase_orders')->truncate();
-        \DB::table('goods_receipts')->truncate();
-        \DB::table('stock_batches')->truncate();
-        \DB::table('medicine_brand_batches')->truncate();
-        \DB::table('medicine_brands')->truncate();
-        \DB::table('medicines')->truncate();
+        // \DB::table('purchase_orders')->truncate();
+        // \DB::table('goods_receipts')->truncate();
+        // \DB::table('stock_batches')->truncate();
+        // \DB::table('medicine_brand_batches')->truncate();
+        // \DB::table('medicine_brands')->truncate();
+        if (\DB::table('medicine_brands')->count() === 0) {
+            \Log::info('medicine_brands table is empty at start of RestaurantSeeder');
+        }
+        // \DB::table('medicines')->truncate();
 
         // Add 35 real restaurant items (ingredients/menu items) with English names and descriptions
         $restaurantItems = [

@@ -55,6 +55,9 @@ class ProcurementController extends Controller
                 'description' => $item['description'] ?? null,
                 'quantity' => $qty,
                 'unitCost' => $unitCost,
+                'unitType' => $item['unitType'] ?? 'unit',
+                'scale' => $item['scale'] ?? 'ml',
+                'conversion' => (int) ($item['conversion'] ?? 1),
                 'wholesalePrice' => isset($item['wholesalePrice']) ? round((float) $item['wholesalePrice'], 2) : null,
                 'sellingPrice' => isset($item['sellingPrice']) ? round((float) $item['sellingPrice'], 2) : null,
                 'barcode' => !empty($item['barcode']) ? trim((string) $item['barcode']) : null,
@@ -262,6 +265,9 @@ class ProcurementController extends Controller
             'items.*.medicineBrandId' => 'nullable|integer|exists:medicine_brands,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unitCost' => 'nullable|numeric|min:0',
+            'items.*.unitType' => 'nullable|string|max:50',
+            'items.*.scale' => 'nullable|string|max:50',
+            'items.*.conversion' => 'nullable|numeric|min:1',
             'items.*.wholesalePrice' => 'nullable|numeric|min:0',
             'items.*.sellingPrice' => 'nullable|numeric|min:0',
             'items.*.barcode' => 'nullable|string|max:120',
@@ -301,6 +307,18 @@ class ProcurementController extends Controller
                 }
                 if (!empty($item['barcode'])) {
                     $brandUpdate['barcode'] = $item['barcode'];
+                }
+                if (!empty($item['unitType'])) {
+                    $brandUpdate['unit_type'] = $item['unitType'];
+                }
+                if (!empty($item['scale'])) {
+                    $brandUpdate['scale'] = $item['scale'];
+                }
+                if (!empty($item['conversion'])) {
+                    $brandUpdate['conversion'] = (int) $item['conversion'];
+                }
+                if (isset($item['unitCost']) && $item['unitCost'] !== null) {
+                    $brandUpdate['unit_cost'] = (float) $item['unitCost'];
                 }
                 $brand->update($brandUpdate);
 

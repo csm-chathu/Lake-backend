@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\MedicineController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\DoctorChargePresetController;
 use App\Http\Controllers\Api\SurgeryChargePresetController;
+use App\Http\Controllers\Api\DisposabalChargePresetController;
 use App\Http\Controllers\Api\ClinicSettingController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\StockController;
@@ -43,6 +44,7 @@ use App\Http\Controllers\Api\SalaryPaymentController;
 use App\Http\Controllers\Api\EmployeeBonusController;
 use App\Http\Controllers\Api\CustomerReturnController;
 use App\Http\Controllers\Api\SystemMaintenanceController;
+use App\Http\Controllers\Api\IncomeExpenseController;
 
 // Keep backwards-compatible routes at /api/<resource>
 // preview next passbook number (placed before resource to avoid route parameter conflicts)
@@ -57,9 +59,12 @@ Route::post('appointments/{appointment}/send-invoice', [AppointmentController::c
 Route::apiResource('doctor-charge-presets', DoctorChargePresetController::class)->only(['index','store','update','destroy']);
 // surgery charge presets (full CRUD)
 Route::apiResource('surgery-charge-presets', SurgeryChargePresetController::class)->only(['index','store','update','destroy']);
+// disposabal charge presets (full CRUD)
+Route::apiResource('disposabal-charge-presets', DisposabalChargePresetController::class)->only(['index','store','update','destroy']);
 Route::apiResource('owners', OwnerController::class);
 Route::apiResource('veterinarians', VeterinarianController::class);
 Route::apiResource('medicines', MedicineController::class);
+Route::apiResource('items-variants', MedicineController::class);
 Route::apiResource('suppliers', SupplierController::class);
 Route::apiResource('employees', EmployeeController::class);
 Route::apiResource('salary-payments', SalaryPaymentController::class);
@@ -116,6 +121,13 @@ Route::get('system/database', [SystemMaintenanceController::class, 'checkDatabas
 // auth routes (token-based)
 Route::post('login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('logout', [AuthController::class, 'logout']);
+
+Route::middleware('auth:sanctum')->group(function() {
+    Route::get('/income-expenses', [IncomeExpenseController::class, 'index']);
+    Route::post('/income-expenses', [IncomeExpenseController::class, 'store']);
+    Route::put('/income-expenses/{id}', [IncomeExpenseController::class, 'update']);
+    Route::delete('/income-expenses/{id}', [IncomeExpenseController::class, 'destroy']);
+});
 
 // Also expose v1 prefix (optional)
 Route::prefix('v1')->group(function () {

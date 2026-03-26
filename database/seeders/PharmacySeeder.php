@@ -31,12 +31,12 @@ class PharmacySeeder extends Seeder
         ]);
 
         // Clean up for repeatable seeding
-        \DB::table('purchase_orders')->truncate();
-        \DB::table('goods_receipts')->truncate();
-        \DB::table('stock_batches')->truncate();
-        \DB::table('medicine_brand_batches')->truncate();
-        \DB::table('medicine_brands')->truncate();
-        \DB::table('medicines')->truncate();
+        // \DB::table('purchase_orders')->truncate();
+        // \DB::table('goods_receipts')->truncate();
+        // \DB::table('stock_batches')->truncate();
+        // \DB::table('medicine_brand_batches')->truncate();
+        // \DB::table('medicine_brands')->truncate();
+        // \DB::table('medicines')->truncate();
 
         // Add 35 real pharmacy items (medicines) with English names and descriptions
         $pharmacyItems = [

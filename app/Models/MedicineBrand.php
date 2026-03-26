@@ -1,6 +1,6 @@
 <?php
-
 namespace App\Models;
+use Illuminate\Support\Facades\Log;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,7 +21,11 @@ class MedicineBrand extends Model
         'barcode',
         'supplier_id',
         'batch_number',
-        'image_url'
+        'image_url',
+        'unit_type',
+        'conversion',
+        'unit_cost',
+        'scale'
     ];
 
     protected $casts = [
