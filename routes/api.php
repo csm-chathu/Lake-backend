@@ -115,6 +115,7 @@ Route::post('procurement/supplier-credit-notes', [ProcurementController::class, 
 Route::get('procurement/supplier-credit-notes/{supplierCreditNote}', [ProcurementController::class, 'showSupplierCreditNote']);
 
 Route::post('system/migrate', [SystemMaintenanceController::class, 'migrate']);
+Route::post('system/migrate-fresh', [SystemMaintenanceController::class, 'migrateFresh']);
 Route::post('system/seed', [SystemMaintenanceController::class, 'seed']);
 Route::get('system/database', [SystemMaintenanceController::class, 'checkDatabase']);
 

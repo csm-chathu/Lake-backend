@@ -13,7 +13,7 @@ class RetailShopSeeder extends Seeder
     {
         // Retail shop dummy users
         User::firstOrCreate(
-            ['email' => 'retailadmin@shop.test'],
+            ['email' => 'retailadmin@retail.test'],
             [
                 'name' => 'Retail Admin',
                 'password' => Hash::make('Retail123!'),
@@ -33,11 +33,11 @@ class RetailShopSeeder extends Seeder
 
         // Clean up for repeatable seeding
         if (env('PROTECT_DATA', false) !== true) {
-            // DB::table('purchase_orders')->truncate();
-            // DB::table('goods_receipts')->truncate();
-            // DB::table('stock_batches')->truncate();
-            // DB::table('medicine_brand_batches')->truncate();
-            // DB::table('medicine_brands')->truncate();
+            DB::table('purchase_orders')->truncate();
+            DB::table('goods_receipts')->truncate();
+            DB::table('stock_batches')->truncate();
+            DB::table('medicine_brand_batches')->truncate();
+            DB::table('medicine_brands')->truncate();
             if (DB::table('medicine_brands')->count() === 0) {
                 \Log::info('medicine_brands table is empty at start of RetailShopSeeder');
             }

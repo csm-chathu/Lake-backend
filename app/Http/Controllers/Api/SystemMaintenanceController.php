@@ -9,8 +9,81 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
+
 class SystemMaintenanceController extends Controller
 {
+
+    public function migrateFresh(Request $request)
+    {
+        if (!$this->authorizeRequest($request)) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $domain = $this->resolveDomainHint($request);
+        [$connection, $database] = $this->databaseSnapshot();
+        $sqlitePath = null;
+        if ($connection === 'sqlite') {
+            $sqlitePath = base_path($database);
+            if (!is_file($sqlitePath)) {
+                $sqlitePath = database_path(basename($database));
+            }
+            if (is_file($sqlitePath)) {
+                $size = filesize($sqlitePath);
+                $mtime = filemtime($sqlitePath);
+                \Log::info("[MIGRATE FRESH] SQLite file before migration: $sqlitePath, size=$size, mtime=" . date('c', $mtime));
+            } else {
+                \Log::warning("[MIGRATE FRESH] SQLite file not found before migration: $sqlitePath");
+            }
+        }
+        [$canConnect, $error] = $this->canConnect($connection);
+
+        if (!$canConnect) {
+            return response()->json([
+                'message' => 'Database connection failed before migration',
+                'domain' => $domain,
+                'connection' => $connection,
+                'database' => $database,
+                'error' => $error,
+            ], 422);
+        }
+
+        try {
+            $exitCode = \Artisan::call('migrate:fresh', ['--force' => true]);
+            $output = trim((string) \Artisan::output());
+            if ($connection === 'sqlite' && $sqlitePath && is_file($sqlitePath)) {
+                $size = filesize($sqlitePath);
+                $mtime = filemtime($sqlitePath);
+                \Log::info("[MIGRATE FRESH] SQLite file after migration: $sqlitePath, size=$size, mtime=" . date('c', $mtime));
+            }
+        } catch (\Throwable $throwable) {
+            return response()->json([
+                'message' => 'Migrate fresh failed',
+                'domain' => $domain,
+                'connection' => $connection,
+                'database' => $database,
+                'error' => $throwable->getMessage(),
+            ], 500);
+        }
+
+        if ($exitCode !== 0) {
+            return response()->json([
+                'message' => 'Migrate fresh command failed',
+                'domain' => $domain,
+                'connection' => $connection,
+                'database' => $database,
+                'exitCode' => $exitCode,
+                'output' => $output,
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'Migrate fresh completed',
+            'domain' => $domain,
+            'connection' => $connection,
+            'database' => $database,
+            'output' => $output,
+        ]);
+    }
     private function isAbsolutePath(string $path): bool
     {
         $path = trim($path);
@@ -347,7 +420,11 @@ class SystemMaintenanceController extends Controller
         if ($heroImage !== null) {
             $data['hero_image_url'] = trim((string) $heroImage);
         }
-
+        // Add shop_type if present in payload or request
+        $shopType = $payload['shop_type'] ?? $request->input('shop_type');
+        if ($shopType !== null && $shopType !== '') {
+            $data['shop_type'] = trim((string) $shopType);
+        }
         return array_filter($data, static fn ($value) => $value !== '');
     }
 
