@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\DoctorChargePresetController;
 use App\Http\Controllers\Api\SurgeryChargePresetController;
 use App\Http\Controllers\Api\DisposabalChargePresetController;
+use App\Http\Controllers\Api\DiscountController;
 use App\Http\Controllers\Api\ClinicSettingController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\StockController;
@@ -61,6 +62,8 @@ Route::apiResource('doctor-charge-presets', DoctorChargePresetController::class)
 Route::apiResource('surgery-charge-presets', SurgeryChargePresetController::class)->only(['index','store','update','destroy']);
 // disposabal charge presets (full CRUD)
 Route::apiResource('disposabal-charge-presets', DisposabalChargePresetController::class)->only(['index','store','update','destroy']);
+// discounts (full CRUD)
+Route::apiResource('discounts', DiscountController::class)->only(['index','store','update','destroy']);
 Route::apiResource('owners', OwnerController::class);
 Route::apiResource('veterinarians', VeterinarianController::class);
 Route::apiResource('medicines', MedicineController::class);
@@ -130,6 +133,14 @@ Route::middleware('auth:sanctum')->group(function() {
     Route::delete('/income-expenses/{id}', [IncomeExpenseController::class, 'destroy']);
 });
 
+
+Route::get('/keep-alive', function () {
+    return response()->json([
+        'status' => 'ok',
+        'time' => now()
+    ]);
+});
+
 // Also expose v1 prefix (optional)
 Route::prefix('v1')->group(function () {
     // preview next passbook number under v1 as well (placed before resource)
@@ -144,6 +155,8 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('doctor-charge-presets', DoctorChargePresetController::class)->only(['index','store','update','destroy']);
     // surgery charge presets under v1 (full CRUD)
     Route::apiResource('surgery-charge-presets', SurgeryChargePresetController::class)->only(['index','store','update','destroy']);
+    // discounts under v1 (full CRUD)
+    Route::apiResource('discounts', DiscountController::class)->only(['index','store','update','destroy']);
     Route::apiResource('owners', OwnerController::class);
     Route::apiResource('veterinarians', VeterinarianController::class);
     Route::apiResource('medicines', MedicineController::class);
