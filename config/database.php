@@ -38,7 +38,15 @@ return [
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DATABASE_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'database' => (function () {
+                $db = env('DB_DATABASE', 'database.sqlite');
+                // If already an absolute path (Windows or Unix), use as-is.
+                // Otherwise treat as a filename relative to the database/ directory.
+                if ($db && (str_starts_with($db, '/') || preg_match('/^[A-Za-z]:[\\\\\/]/', $db))) {
+                    return $db;
+                }
+                return database_path($db ?: 'database.sqlite');
+            })(),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],
