@@ -1,0 +1,26 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.vetfinal.app
+productName: VetFinal
+files:
+  - filter:
+      - electron-main.cjs
+      - preload.js
+      - start-backend.cjs
+      - mysql/**/*
+      - SumatraPDF.exe
+extraResources:
+  - from: ../backend-laravel
+    to: backend-laravel
+    filter:
+      - '**/*'
+      - '!.git/**/*'
+      - '!tests/**/*'
+      - '!node_modules/**/*'
+win:
+  target: nsis
+  sign: false
+mac:
+  target: dmg
+electronVersion: 26.0.0

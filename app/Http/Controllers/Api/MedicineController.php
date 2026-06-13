@@ -72,6 +72,7 @@ class MedicineController extends Controller
             'scale' => $brand->scale,
             'conversion' => (int) $brand->conversion,
             'unit_cost' => (float) $brand->unit_cost,
+            'dose_sizes' => is_array($brand->dose_sizes) ? array_values($brand->dose_sizes) : [],
         ];
     }
 
@@ -155,6 +156,7 @@ class MedicineController extends Controller
                             'scale' => $brandData['scale'] ?? 'ml',
                             'conversion' => $brandData['conversion'] ?? 1,
                             'unit_cost' => $brandData['unit_cost'] ?? 0,
+                            'dose_sizes' => isset($brandData['dose_sizes']) && is_array($brandData['dose_sizes']) ? $brandData['dose_sizes'] : null,
                         ]);
                         $batches = (isset($brandData['batches']) && is_array($brandData['batches'])) ? $brandData['batches'] : [];
                         if (empty($batches)) {
@@ -242,6 +244,7 @@ class MedicineController extends Controller
                             'scale' => $brandData['scale'] ?? 'ml',
                             'conversion' => $brandData['conversion'] ?? 1,
                             'unit_cost' => $brandData['unit_cost'] ?? 0,
+                            'dose_sizes' => isset($brandData['dose_sizes']) && is_array($brandData['dose_sizes']) ? $brandData['dose_sizes'] : null,
                         ];
                     }
                     if (isset($brandData['id'])) {

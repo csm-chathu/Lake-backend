@@ -25,13 +25,15 @@ class MedicineBrand extends Model
         'unit_type',
         'conversion',
         'unit_cost',
-        'scale'
+        'scale',
+        'dose_sizes'
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'wholesale_price' => 'decimal:2',
         'expiry_date' => 'date',
+        'dose_sizes' => 'array',
     ];
 
     public function medicine()
