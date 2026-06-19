@@ -18,6 +18,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::get('/ping', fn() => response()->json(['status' => 'ok', 'time' => now()->toISOString()]));
+
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\OwnerController;
 use App\Http\Controllers\Api\VeterinarianController;
