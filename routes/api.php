@@ -48,6 +48,7 @@ use App\Http\Controllers\Api\EmployeeBonusController;
 use App\Http\Controllers\Api\CustomerReturnController;
 use App\Http\Controllers\Api\SystemMaintenanceController;
 use App\Http\Controllers\Api\IncomeExpenseController;
+use App\Http\Controllers\Api\ItemTypeController;
 
 // Keep backwards-compatible routes at /api/<resource>
 // preview next passbook number (placed before resource to avoid route parameter conflicts)
@@ -58,6 +59,7 @@ Route::post('patients/{patient}/vaccinations', [PatientVaccinationController::cl
 Route::patch('patient-vaccinations/{patientVaccination}', [PatientVaccinationController::class, 'update']);
 Route::delete('patient-vaccinations/{patientVaccination}', [PatientVaccinationController::class, 'destroy']);
 Route::post('appointments/{appointment}/send-invoice', [AppointmentController::class, 'sendInvoiceSms']);
+Route::delete('appointments', [AppointmentController::class, 'bulkDestroy']);
 // doctor charge presets (full CRUD)
 Route::apiResource('doctor-charge-presets', DoctorChargePresetController::class)->only(['index','store','update','destroy']);
 // surgery charge presets (full CRUD)
@@ -66,6 +68,8 @@ Route::apiResource('surgery-charge-presets', SurgeryChargePresetController::clas
 Route::apiResource('disposabal-charge-presets', DisposabalChargePresetController::class)->only(['index','store','update','destroy']);
 // discounts (full CRUD)
 Route::apiResource('discounts', DiscountController::class)->only(['index','store','update','destroy']);
+// item types (full CRUD)
+Route::apiResource('item-types', ItemTypeController::class)->only(['index','store','update','destroy']);
 Route::apiResource('owners', OwnerController::class);
 Route::apiResource('veterinarians', VeterinarianController::class);
 Route::apiResource('medicines', MedicineController::class);

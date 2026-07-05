@@ -650,4 +650,14 @@ class AppointmentController extends Controller
         $appointment->delete();
         return response()->noContent();
     }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json(['message' => 'No ids provided'], 422);
+        }
+        Appointment::whereIn('id', $ids)->delete();
+        return response()->json(['deleted' => count($ids)]);
+    }
 }
