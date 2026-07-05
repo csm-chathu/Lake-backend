@@ -249,6 +249,7 @@ class AppointmentController extends Controller
             'isWalkIn' => (bool)$appointment->is_walk_in,
             'doctorCharge' => (float)$appointment->doctor_charge,
             'surgeryCharge' => (float)$appointment->surgery_charge,
+            'disposableCharge' => (float)$appointment->disposable_charge,
             'otherCharge' => (float)$appointment->other_charge,
             'otherChargeReason' => $appointment->other_charge_reason,
             'discount' => (float)$appointment->discount,
@@ -365,6 +366,7 @@ class AppointmentController extends Controller
             'veterinarianId' => 'nullable|integer|exists:veterinarians,id',
             'doctorCharge' => 'nullable|numeric|min:0',
             'surgeryCharge' => 'nullable|numeric|min:0',
+            'disposableCharge' => 'nullable|numeric|min:0',
             'otherCharge' => 'nullable|numeric|min:0',
             'otherChargeReason' => 'nullable|string|max:255',
             'discount' => 'nullable|numeric|min:0',
@@ -436,6 +438,7 @@ class AppointmentController extends Controller
                 'is_walk_in' => $data['isWalkIn'] ?? false,
                 'doctor_charge' => $data['doctorCharge'] ?? 0,
                 'surgery_charge' => $data['surgeryCharge'] ?? 0,
+                'disposable_charge' => $data['disposableCharge'] ?? 0,
                 'other_charge' => $data['otherCharge'] ?? 0,
                 'other_charge_reason' => $data['otherChargeReason'] ?? null,
                 'discount' => $data['discount'] ?? 0,
@@ -482,7 +485,7 @@ class AppointmentController extends Controller
             //     ]);
             // }
 
-            $gross = ($appointment->doctor_charge ?? 0) + ($appointment->surgery_charge ?? 0) + $medicinesTotal;
+            $gross = ($appointment->doctor_charge ?? 0) + ($appointment->surgery_charge ?? 0) + ($appointment->disposable_charge ?? 0) + ($appointment->other_charge ?? 0) + $medicinesTotal;
             $totalCharge = max(0, $gross - ($appointment->discount ?? 0));
             $appointment->total_charge = $totalCharge;
             $appointment->save();
@@ -518,6 +521,7 @@ class AppointmentController extends Controller
             'isWalkIn' => 'nullable|boolean',
             'doctorCharge' => 'nullable|numeric|min:0',
             'surgeryCharge' => 'nullable|numeric|min:0',
+            'disposableCharge' => 'nullable|numeric|min:0',
             'otherCharge' => 'nullable|numeric|min:0',
             'otherChargeReason' => 'nullable|string|max:255',
             'discount' => 'nullable|numeric|min:0',
@@ -555,6 +559,7 @@ class AppointmentController extends Controller
                 'is_walk_in' => $data['isWalkIn'] ?? $appointment->is_walk_in,
                 'doctor_charge' => $data['doctorCharge'] ?? $appointment->doctor_charge,
                 'surgery_charge' => $data['surgeryCharge'] ?? $appointment->surgery_charge,
+                'disposable_charge' => $data['disposableCharge'] ?? $appointment->disposable_charge,
                 'other_charge' => $data['otherCharge'] ?? $appointment->other_charge,
                 'other_charge_reason' => $data['otherChargeReason'] ?? $appointment->other_charge_reason,
                 'discount' => $data['discount'] ?? $appointment->discount,
@@ -594,7 +599,7 @@ class AppointmentController extends Controller
                 );
             }
 
-            $gross = ($appointment->doctor_charge ?? 0) + ($appointment->surgery_charge ?? 0) + $medicinesTotal;
+            $gross = ($appointment->doctor_charge ?? 0) + ($appointment->surgery_charge ?? 0) + ($appointment->disposable_charge ?? 0) + ($appointment->other_charge ?? 0) + $medicinesTotal;
             $appointment->total_charge = max(0, $gross - ($appointment->discount ?? 0));
             $appointment->save();
 

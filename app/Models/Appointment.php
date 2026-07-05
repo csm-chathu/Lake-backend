@@ -19,6 +19,7 @@ class Appointment extends Model
         'veterinarian_id',
         'doctor_charge',
         'surgery_charge',
+        'disposable_charge',
         'other_charge',
         'other_charge_reason',
         'total_charge',
