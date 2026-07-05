@@ -49,6 +49,7 @@ use App\Http\Controllers\Api\CustomerReturnController;
 use App\Http\Controllers\Api\SystemMaintenanceController;
 use App\Http\Controllers\Api\IncomeExpenseController;
 use App\Http\Controllers\Api\ItemTypeController;
+use App\Http\Controllers\Api\MedicineCategoryController;
 
 // Keep backwards-compatible routes at /api/<resource>
 // preview next passbook number (placed before resource to avoid route parameter conflicts)
@@ -70,6 +71,8 @@ Route::apiResource('disposabal-charge-presets', DisposabalChargePresetController
 Route::apiResource('discounts', DiscountController::class)->only(['index','store','update','destroy']);
 // item types (full CRUD)
 Route::apiResource('item-types', ItemTypeController::class)->only(['index','store','update','destroy']);
+// medicine categories (full CRUD)
+Route::apiResource('medicine-categories', MedicineCategoryController::class)->only(['index','store','update','destroy']);
 Route::apiResource('owners', OwnerController::class);
 Route::apiResource('veterinarians', VeterinarianController::class);
 Route::apiResource('medicines', MedicineController::class);

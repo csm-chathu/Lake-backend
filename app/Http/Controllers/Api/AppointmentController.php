@@ -238,6 +238,7 @@ class AppointmentController extends Controller
 
         return [
             'id' => $appointment->id,
+            'groupId' => $appointment->group_id,
             'date' => $appointment->date,
             'reason' => $appointment->reason,
             'status' => $appointment->status,
@@ -360,6 +361,7 @@ class AppointmentController extends Controller
             'patient.owner.lastName' => 'nullable|string|max:80',
             'patient.owner.phone' => 'nullable|string|max:20',
             'patient.owner.email' => 'nullable|email|max:120',
+            'groupId' => 'nullable|string|max:36',
             'veterinarianId' => 'nullable|integer|exists:veterinarians,id',
             'doctorCharge' => 'nullable|numeric|min:0',
             'surgeryCharge' => 'nullable|numeric|min:0',
@@ -425,6 +427,7 @@ class AppointmentController extends Controller
             }
 
             $appointment = Appointment::create([
+                'group_id' => $data['groupId'] ?? null,
                 'date' => $data['date'] ?? null,
                 'reason' => $data['reason'] ?? null,
                 'status' => $data['status'] ?? 'scheduled',

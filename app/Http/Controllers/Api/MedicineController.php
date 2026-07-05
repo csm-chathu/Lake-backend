@@ -83,6 +83,7 @@ class MedicineController extends Controller
                 'name' => $medicine->name,
                 'description' => $medicine->description,
                 'type' => is_array($medicine->type) ? $medicine->type : (is_string($medicine->type) ? [$medicine->type] : []),
+                'category_id' => $medicine->category_id ? (int) $medicine->category_id : null,
                 'brands' => $medicine->brands->map(fn($b) => $this->formatBrand($b)),
                 'createdAt' => $medicine->created_at,
                 'updatedAt' => $medicine->updated_at
@@ -93,7 +94,11 @@ class MedicineController extends Controller
     {
         $query = Medicine::with(['brands.batches'])->orderBy('name');
         $typeFilter = $request->input('type');
+        $categoryFilter = $request->input('category_id');
         $isSqlite = \DB::getDriverName() === 'sqlite';
+        if ($categoryFilter) {
+            $query->where('category_id', (int) $categoryFilter);
+        }
         if ($typeFilter) {
             if ($isSqlite) {
                 // SQLite: fetch all, filter in PHP
@@ -116,6 +121,7 @@ class MedicineController extends Controller
             'name' => 'required|string|max:200',
             'description' => 'nullable|string',
             'type' => 'nullable', // Accept any type, validate below
+            'category_id' => 'nullable|integer',
             'brands' => 'nullable|array'
         ]);
 
@@ -132,6 +138,7 @@ class MedicineController extends Controller
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
                 'type' => $data['type'] ?? 'medicine',
+                'category_id' => isset($data['category_id']) ? (int) $data['category_id'] : null,
             ]);
 
             if (isset($data['brands']) && is_array($data['brands'])) {
@@ -203,6 +210,7 @@ class MedicineController extends Controller
             'name' => 'sometimes|required|string|max:200',
             'description' => 'nullable|string',
             'type' => 'nullable', // Accept any type, validate below
+            'category_id' => 'nullable|integer',
             'brands' => 'nullable|array'
         ]);
 
@@ -218,6 +226,7 @@ class MedicineController extends Controller
         if (isset($data['name'])) $updateData['name'] = $data['name'];
         if (isset($data['description'])) $updateData['description'] = $data['description'];
         if (isset($data['type'])) $updateData['type'] = $data['type'];
+        if (array_key_exists('category_id', $data)) $updateData['category_id'] = $data['category_id'] ? (int) $data['category_id'] : null;
 
         DB::transaction(function () use ($medicine, $updateData, $data) {
             $medicine->update($updateData);
