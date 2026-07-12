@@ -153,7 +153,8 @@ class AppointmentController extends Controller
         }
 
         $administeredAt = $this->parsePlanDate($plan['administeredAt'] ?? null)
-            ?? ($appointment->date ? Carbon::parse($appointment->date) : now());
+            ?? ($appointment->date ? $this->parsePlanDate($appointment->date) : null)
+            ?? now();
 
         $nextDueAt = $this->parsePlanDate($plan['nextDueAt'] ?? null)
             ?? (clone $administeredAt)->addYear();
@@ -615,7 +616,7 @@ class AppointmentController extends Controller
                         'file_public_id' => $report['filePublicId'] ?? null,
                         'mime_type' => $report['mimeType'] ?? null,
                         'file_bytes' => $report['fileBytes'] ?? null,
-                        'reported_at' => isset($report['reportedAt']) ? Carbon::parse($report['reportedAt']) : now(),
+                        'reported_at' => isset($report['reportedAt']) ? ($this->parsePlanDate($report['reportedAt']) ?? now()) : now(),
                     ]);
                 }
             }
