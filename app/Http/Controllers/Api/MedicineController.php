@@ -20,6 +20,13 @@ class MedicineController extends Controller
         }
     }
 
+    private function safeDateFromModel($model, string $attribute): ?string
+    {
+        $raw = $model->getRawOriginal($attribute);
+        if (!$raw) return null;
+        return $this->safeDate(substr((string) $raw, 0, 10));
+    }
+
     private function persistBatches($brand, array $batchData): void
     {
         $brand->batches()->delete();
@@ -56,7 +63,7 @@ class MedicineController extends Controller
             ? $brand->batches->map(fn ($batch) => [
                 'id' => $batch->id,
                 'batch_number' => $batch->batch_number,
-                'expiry_date' => $batch->expiry_date,
+                'expiry_date' => $this->safeDateFromModel($batch, 'expiry_date'),
                 'quantity' => (int) $batch->quantity,
                 'barcode' => $batch->barcode,
                 'supplier_id' => $batch->supplier_id,
@@ -73,7 +80,7 @@ class MedicineController extends Controller
             'price' => (float) $brand->price,
             'wholesale_price' => (float) ($brand->wholesale_price ?? 0),
             'stock' => $stock,
-            'expiry_date' => $brand->expiry_date,
+            'expiry_date' => $this->safeDateFromModel($brand, 'expiry_date'),
             'barcode' => $brand->barcode,
             'supplier_id' => $brand->supplier_id,
             'batch_number' => $brand->batch_number,
