@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\DB;
 
 class MedicineController extends Controller
 {
+    private function safeDate(?string $value): ?string
+    {
+        if (!$value) return null;
+        try {
+            $d = \Carbon\Carbon::createFromFormat('Y-m-d', $value);
+            return $d ? $d->toDateString() : null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
     private function persistBatches($brand, array $batchData): void
     {
         $brand->batches()->delete();
@@ -29,7 +40,7 @@ class MedicineController extends Controller
             $totalStock += $quantity;
             $brand->batches()->create([
                 'batch_number' => $batchNumber,
-                'expiry_date' => $batch['expiry_date'] ?? null,
+                'expiry_date' => $this->safeDate($batch['expiry_date'] ?? null),
                 'quantity' => $quantity,
                 'barcode' => !empty($batch['barcode']) ? trim((string) $batch['barcode']) : null,
                 'supplier_id' => !empty($batch['supplier_id']) ? (int) $batch['supplier_id'] : null,
@@ -122,7 +133,9 @@ class MedicineController extends Controller
             'description' => 'nullable|string',
             'type' => 'nullable', // Accept any type, validate below
             'category_id' => 'nullable|integer',
-            'brands' => 'nullable|array'
+            'brands' => 'nullable|array',
+            'brands.*.expiry_date' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
+            'brands.*.batches.*.expiry_date' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
         ]);
 
             // Accept type as string or array, always store as array
@@ -154,7 +167,7 @@ class MedicineController extends Controller
                             'price' => $brandData['price'] ?? 0,
                             'wholesale_price' => $brandData['wholesale_price'] ?? 0,
                             'stock' => $brandData['stock'] ?? 0,
-                            'expiry_date' => $brandData['expiry_date'] ?? null,
+                            'expiry_date' => $this->safeDate($brandData['expiry_date'] ?? null),
                             'barcode' => $brandData['barcode'] ?? null,
                             'supplier_id' => $brandData['supplier_id'] ?? null,
                             'batch_number' => $brandData['batch_number'] ?? null,
@@ -211,7 +224,9 @@ class MedicineController extends Controller
             'description' => 'nullable|string',
             'type' => 'nullable', // Accept any type, validate below
             'category_id' => 'nullable|integer',
-            'brands' => 'nullable|array'
+            'brands' => 'nullable|array',
+            'brands.*.expiry_date' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
+            'brands.*.batches.*.expiry_date' => ['nullable', 'regex:/^\d{4}-\d{2}-\d{2}$/'],
         ]);
 
             // Accept type as string or array, always store as array
@@ -244,7 +259,7 @@ class MedicineController extends Controller
                             'price' => $brandData['price'] ?? 0,
                             'wholesale_price' => $brandData['wholesale_price'] ?? 0,
                             'stock' => $brandData['stock'] ?? 0,
-                            'expiry_date' => $brandData['expiry_date'] ?? null,
+                            'expiry_date' => $this->safeDate($brandData['expiry_date'] ?? null),
                             'barcode' => $brandData['barcode'] ?? null,
                             'supplier_id' => $brandData['supplier_id'] ?? null,
                             'batch_number' => $brandData['batch_number'] ?? null,
