@@ -60,6 +60,7 @@ class DiagnosticUploadController extends Controller
         if ($privateKey) {
             try {
                 $response = \Illuminate\Support\Facades\Http::withBasicAuth($privateKey, '')
+                    ->withoutVerifying()
                     ->attach('file', file_get_contents($file->getRealPath()), $filename)
                     ->post('https://upload.imagekit.io/api/v1/files/upload', [
                         'fileName'          => $filename,
