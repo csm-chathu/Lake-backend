@@ -53,13 +53,38 @@ class DiagnosticUploadController extends Controller
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
         $filename = Str::uuid()->toString() . '.' . $extension;
 
-        // Fallback local upload (used only when frontend direct upload not available)
-        $directory = 'medicine-brand-images/' . date('Y/m');
-        $storedPath = $file->storeAs($directory, $filename, 'public');
-        $publicUrl = url(Storage::url($storedPath));
-        $filePublicId = $storedPath;
+        $privateKey  = env('IMAGEKIT_PRIVATE_KEY', '');
+        $publicUrl   = null;
+        $filePublicId = null;
 
-        if (!empty($data['brand_id']) && $publicUrl) {
+        if ($privateKey) {
+            try {
+                $response = \Illuminate\Support\Facades\Http::withBasicAuth($privateKey, '')
+                    ->attach('file', file_get_contents($file->getRealPath()), $filename)
+                    ->post('https://upload.imagekit.io/api/v1/files/upload', [
+                        'fileName'          => $filename,
+                        'useUniqueFileName' => 'true',
+                        'folder'            => '/medicine-brand-images',
+                    ]);
+
+                if ($response->successful()) {
+                    $publicUrl    = $response->json('url');
+                    $filePublicId = $response->json('fileId');
+                }
+            } catch (\Exception $e) {
+                // fall through to local storage
+            }
+        }
+
+        // Fallback: store locally if ImageKit upload failed or not configured
+        if (!$publicUrl) {
+            $directory  = 'medicine-brand-images/' . date('Y/m');
+            $storedPath = $file->storeAs($directory, $filename, 'public');
+            $publicUrl  = url(Storage::url($storedPath));
+            $filePublicId = $storedPath;
+        }
+
+        if (!empty($data['brand_id'])) {
             $brand = MedicineBrand::find($data['brand_id']);
             if ($brand) {
                 $brand->image_url = $publicUrl;
