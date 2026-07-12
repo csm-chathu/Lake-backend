@@ -153,7 +153,8 @@ class MedicineController extends Controller
                     $data['type'] = [];
                 }
             }
-        $medicine = DB::transaction(function () use ($data) {
+        $rawBrands = $request->input('brands', []);
+        $medicine = DB::transaction(function () use ($data, $rawBrands) {
             $medicine = Medicine::create([
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
@@ -161,8 +162,8 @@ class MedicineController extends Controller
                 'category_id' => isset($data['category_id']) ? (int) $data['category_id'] : null,
             ]);
 
-            if (isset($data['brands']) && is_array($data['brands'])) {
-                foreach ($data['brands'] as $brandData) {
+            if (is_array($rawBrands) && count($rawBrands) > 0) {
+                foreach ($rawBrands as $brandData) {
                     if (($data['type'] ?? 'medicine') === 'service') {
                         $brand = $medicine->brands()->create([
                             'name' => $brandData['name'] ?? null,
@@ -250,11 +251,12 @@ class MedicineController extends Controller
         if (isset($data['type'])) $updateData['type'] = $data['type'];
         if (array_key_exists('category_id', $data)) $updateData['category_id'] = $data['category_id'] ? (int) $data['category_id'] : null;
 
-        DB::transaction(function () use ($medicine, $updateData, $data) {
+        $rawBrands = $request->input('brands');
+        DB::transaction(function () use ($medicine, $updateData, $data, $rawBrands) {
             $medicine->update($updateData);
 
-            if (isset($data['brands'])) {
-                foreach ($data['brands'] as $brandData) {
+            if (isset($rawBrands) && is_array($rawBrands)) {
+                foreach ($rawBrands as $brandData) {
                     if (($data['type'] ?? $medicine->type) === 'service') {
                         $brandPayload = [
                             'name' => $brandData['name'] ?? null,
