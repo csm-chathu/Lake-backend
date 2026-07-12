@@ -342,7 +342,7 @@ class AppointmentController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'date' => 'nullable|date',
+            'date' => 'nullable|date|after:2000-01-01|before:2100-01-01',
             'reason' => 'nullable|string|max:1024',
             'status' => 'nullable|in:scheduled,completed,cancelled',
             'patientId' => 'nullable|integer|exists:patients,id',
@@ -513,7 +513,7 @@ class AppointmentController extends Controller
         }
 
         $data = $request->validate([
-            'date' => 'nullable|date',
+            'date' => 'nullable|date|after:2000-01-01|before:2100-01-01',
             'reason' => 'nullable|string|max:1024',
             'status' => 'nullable|in:scheduled,completed,cancelled',
             'patientId' => 'nullable|integer|exists:patients,id',
@@ -534,17 +534,17 @@ class AppointmentController extends Controller
             'diagnosticReports.*.filePublicId' => 'nullable|string|max:255',
             'diagnosticReports.*.mimeType' => 'nullable|string|max:128',
             'diagnosticReports.*.fileBytes' => 'nullable|integer|min:0',
-            'diagnosticReports.*.reportedAt' => 'nullable|date',
+            'diagnosticReports.*.reportedAt' => 'nullable|date|after:2000-01-01|before:2100-01-01',
             'vaccinationPlan' => 'nullable|array',
             'vaccinationPlan.vaccineName' => 'nullable|string|max:255',
             'vaccinationPlan.doseNumber' => 'nullable|integer|min:0|max:255',
-            'vaccinationPlan.administeredAt' => 'nullable|date',
-            'vaccinationPlan.nextDueAt' => 'nullable|date',
+            'vaccinationPlan.administeredAt' => 'nullable|date|after:2000-01-01|before:2100-01-01',
+            'vaccinationPlan.nextDueAt' => 'nullable|date|after:2000-01-01|before:2100-01-01',
             'vaccinationPlan.remindBeforeDays' => 'nullable|integer|min:0|max:365',
             'vaccinationPlan.notes' => 'nullable|string',
             'paymentType' => 'nullable|in:cash,credit',
             'paymentStatus' => 'nullable|in:pending,paid',
-            'settledAt' => 'nullable|date'
+            'settledAt' => 'nullable|date|after:2000-01-01|before:2100-01-01'
         ]);
 
         $vaccinationPlan = $data['vaccinationPlan'] ?? null;

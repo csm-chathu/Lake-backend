@@ -97,6 +97,8 @@ Route::get('patient-reports', [PatientReportController::class, 'index']);
 Route::post('patient-reports/sync', [PatientReportController::class, 'sync']);
 Route::post('uploads/diagnostic-report', [DiagnosticUploadController::class, 'store']);
 Route::post('uploads/medicine-brand-image', [DiagnosticUploadController::class, 'storeMedicineBrandImage']);
+Route::get('imagekit-auth', [DiagnosticUploadController::class, 'imagekitAuth']);
+Route::patch('medicines/brands/{brandId}/image-url', [DiagnosticUploadController::class, 'saveBrandImageUrl']);
 Route::get('sms-logs', [SmsLogController::class, 'index']);
 Route::get('sms-logs/count', [SmsLogController::class, 'count']);
 Route::get('revenue', [RevenueController::class, 'getRevenue']);

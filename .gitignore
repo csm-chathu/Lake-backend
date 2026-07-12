@@ -1,3 +1,10 @@
+# Database files
+/database/*.sqlite
+/database/*.db
+/database/back/
+*.sqlite
+*.db
+
 /.phpunit.cache
 /node_modules
 /public/build

@@ -162,7 +162,7 @@ class DirectSaleController extends Controller
         $data = $request->validate([
             'date' => 'nullable|date',
             'saleReference' => 'nullable|string|max:120',
-            'paymentType' => 'nullable|in:cash,credit',
+            'paymentType' => 'nullable|in:cash,credit,card,split',
             'paymentStatus' => 'nullable|in:pending,paid',
             'discount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
