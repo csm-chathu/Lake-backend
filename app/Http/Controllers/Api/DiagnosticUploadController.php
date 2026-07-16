@@ -137,4 +137,14 @@ class DiagnosticUploadController extends Controller
         $brand->save();
         return response()->json(['success' => true, 'image_url' => $brand->image_url]);
     }
+
+    // Save a barcode value onto a brand record
+    public function saveBrandBarcode(Request $request, $brandId)
+    {
+        $data = $request->validate(['barcode' => 'required|string|max:255']);
+        $brand = MedicineBrand::findOrFail($brandId);
+        $brand->barcode = $data['barcode'];
+        $brand->save();
+        return response()->json(['success' => true, 'barcode' => $brand->barcode]);
+    }
 }

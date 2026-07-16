@@ -99,6 +99,7 @@ Route::post('uploads/diagnostic-report', [DiagnosticUploadController::class, 'st
 Route::post('uploads/medicine-brand-image', [DiagnosticUploadController::class, 'storeMedicineBrandImage']);
 Route::get('imagekit-auth', [DiagnosticUploadController::class, 'imagekitAuth']);
 Route::patch('medicines/brands/{brandId}/image-url', [DiagnosticUploadController::class, 'saveBrandImageUrl']);
+Route::patch('medicines/brands/{brandId}/barcode', [DiagnosticUploadController::class, 'saveBrandBarcode']);
 Route::get('sms-logs', [SmsLogController::class, 'index']);
 Route::get('sms-logs/count', [SmsLogController::class, 'count']);
 Route::get('revenue', [RevenueController::class, 'getRevenue']);
